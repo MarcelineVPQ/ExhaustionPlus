@@ -11,7 +11,7 @@ namespace ExhaustionPlus
 {
     /// <summary>
     ///     Load harmony patches
-    [BepInPlugin("ExPlusConfig", "ExhaustionPlus Plus", "0.0.1.8")]
+    [BepInPlugin("ExPlusConfig", "ExhaustionPlus", "0.0.2.0")]
     [BepInDependency(Jotunn.Main.ModGuid)]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
     // [BepInDependency("cinnabun.backpacks-v1.0.0", BepInDependency.DependencyFlags.SoftDependency)]
@@ -20,7 +20,7 @@ namespace ExhaustionPlus
         // BepInEx' plugin metadata
         public const string PluginGUID = "D2C1EB51-FDBA-4357-949F-B02C3BA57A36";
         public const string PluginName = "ExhaustionsPlus";
-        public const string PluginVersion = "0.0.1.8";
+        public const string PluginVersion = "0.0.2.0";
         public bool PlayerIsAdmin { get; }
         public bool InitialSynchronization { get; set; }
 
@@ -167,44 +167,44 @@ namespace ExhaustionPlus
                 new AcceptableValueRange<float>(0.01f, 10f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
 
-            //ExhaustionPlus
-            RebalanceConfig.ExhaustionEnable = Config.Bind("ExhaustionPlus", "ExhaustionEnable", true,
-                new ConfigDescription("Enable or disable ExhaustionPlus sprinting system, player will enter 'pushing' state when sprinting at the configured pushing threshold, and 'exhausted' state at the configured ExhaustionPlus threshold",
+            //Exhaustion
+            RebalanceConfig.ExhaustionEnable = Config.Bind("Exhaustion", "ExhaustionEnable", true,
+                new ConfigDescription("Enable or disable Exhaustion sprinting system, player will enter 'pushing' state when sprinting at the configured pushing threshold, and 'exhausted' state at the configured ExhaustionPlus threshold",
                 new AcceptableValueList<bool>(true, false),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.ExhaustionThreshold = Config.Bind("ExhaustionPlus", "ExhaustionThreshold", -40f,
+            RebalanceConfig.ExhaustionThreshold = Config.Bind("Exhaustion", "ExhaustionThreshold", -40f,
                 new ConfigDescription("Stamina threshold to activate ExhaustionPlus debuff",
                 new AcceptableValueRange<float>(-150f, 0f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.ExhaustionRecoveryThreshold = Config.Bind("ExhaustionPlus", "ExhaustionRecoveryThreshold", 0.8f,
+            RebalanceConfig.ExhaustionRecoveryThreshold = Config.Bind("Exhaustion", "ExhaustionRecoveryThreshold", 0.8f,
                 new ConfigDescription("Stamina percentage (where 0.0 = 0%, 1.0 = 100%) threshold to deactivate ExhaustionPlus debuff",
                 new AcceptableValueRange<float>(0f, 1f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.ExhaustionSpeedMultiplier = Config.Bind("ExhaustionPlus", "ExhaustionSpeedModifier", 0.25f,
+            RebalanceConfig.ExhaustionSpeedMultiplier = Config.Bind("Exhaustion", "ExhaustionSpeedModifier", 0.25f,
                 new ConfigDescription("Movement speed multiplier applied when exhausted (note this stacks with the pushing speed modifier)",
                 new AcceptableValueRange<float>(0f, 1f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.PushingThreshold = Config.Bind("ExhaustionPlus", "PushingThreshold", 0f,
+            RebalanceConfig.PushingThreshold = Config.Bind("Exhaustion", "PushingThreshold", 0f,
                 new ConfigDescription("Stamina threshold to apply pushing debuff (speed modifier and sweating effect) at",
                 new AcceptableValueRange<float>(-150f, 100f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.PushingSpeedMultiplier = Config.Bind("ExhaustionPlus", "PushingSpeedModifier", 0.85f,
+            RebalanceConfig.PushingSpeedMultiplier = Config.Bind("Exhaustion", "PushingSpeedModifier", 0.85f,
                 new ConfigDescription("Movement speed multiplier applied when pushing",
                 new AcceptableValueRange<float>(0f, 1f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.PushingWarms = Config.Bind("ExhaustionPlus", "PushingWarms", true,
+            RebalanceConfig.PushingWarms = Config.Bind("Exhaustion", "PushingWarms", true,
                 new ConfigDescription("Enable or disable the pushing debuff 'warming' the player (applies 'warm' debuff; reduces time remaining on 'wet' debuff and temporarily removes 'cold' debuff)",
                 new AcceptableValueList<bool>(true, false),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.PushingWarmRate = Config.Bind("ExhaustionPlus", "PushingWarmRate", 4f,
+            RebalanceConfig.PushingWarmRate = Config.Bind("Exhaustion", "PushingWarmRate", 4f,
                 new ConfigDescription("The rate at which pushing warms the player, reducing time on the 'wet' debuff",
                 new AcceptableValueRange<float>(0f, 20f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.PushingWarmTimeRate = Config.Bind("ExhaustionPlus", "PushingWarmTimeRate", 5f,
+            RebalanceConfig.PushingWarmTimeRate = Config.Bind("Exhaustion", "PushingWarmTimeRate", 5f,
                 new ConfigDescription("The rate at which more time is generated for the 'warm' debuff",
                 new AcceptableValueRange<float>(0f, 20f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.PushingWarmInitialTime = Config.Bind("ExhaustionPlus", "PushingWarmInitialTime", 2f,
+            RebalanceConfig.PushingWarmInitialTime = Config.Bind("Exhaustion", "PushingWarmInitialTime", 2f,
                 new ConfigDescription("The initial amount of time the player gains the 'warm' debuff for",
                 new AcceptableValueRange<float>(1f, 30f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
@@ -236,7 +236,10 @@ namespace ExhaustionPlus
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
 
             //NexusID
-            RebalanceConfig.NexusID = Config.Bind("Utility", "NexusID", 297, "Nexus Mod ID for updates, do not change");
+            RebalanceConfig.NexusID = Config.Bind("Utility", "NexusID", 1685,
+                new ConfigDescription("Nexus Mod ID for updates, do not change",
+                new AcceptableValueRange<int>(0, 2000),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
             RebalanceConfig.BaseHealthStaminaEnable = Config.Bind("Utility", "BaseHealthStaminaEnable", true,
                 new ConfigDescription("Enables or disables base health and stamina adjustments (note other mods may disable this functionality by nature). " +
                 "The method of modification used is somewhat fragile and could break with any update to the game, or not play ball with another mod that touches the same values, as such " +

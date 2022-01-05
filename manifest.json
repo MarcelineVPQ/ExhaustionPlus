@@ -1,0 +1,9 @@
+{
+    "name": "ExhaustionPlus",
+    "version_number": "2.0.0",
+    "website_url": "https://github.com/MarcelineVPQ/ExhaustionPlus",
+    "description": "ExhuastionPlus fork from Original Exhaustion mod for valheim",
+    "dependencies": [
+        "ValheimModding-Jotunn-2.4.5"
+    ]
+}

@@ -25,7 +25,7 @@ The plugin comes pre-configured with settings that make gameplay more interestin
 * Make movement speed scale with carrying weight, scaling harder when exceeding base carry weight
 * Move the "Encumbered" debuff carry weight threshold
 
-#### Modify base player attributes, including    
+#### Modify base player attributes, including
 * Health, stamina and carry weight
 * Stamina regeneration and delay
 * Jump, dodge, and encumbrance stamina usage
@@ -61,7 +61,7 @@ The plugin comes pre-configured with settings that make gameplay more interestin
 Install like any other BepInEx plugin, drop the dll into the BepInEx folder in the Valheim game directory. Configuration is done through the ExPlusConfig.cfg file under BepInEx/config.
 
 ## Notes
-II have tested this on a dedicated and hosted server using Admin and Client access, it currently syncs the config and enforces server-side configuration, allowing Admin level to change settings.  This should be fine for a local and local dedicated server as you have default to admin privileges in that case.  Currently, it requires a reboot to make the changes on the server side.  My next plan is to get live config updates and changes for server-side sync.
+I have tested this on a dedicated and hosted server using Admin and Client access, it currently syncs the config and enforces server-side configuration, allowing Admin level to change settings.  This should be fine for a local and local dedicated server as you have default to admin privileges in that case.  Currently, it requires a reboot to make the changes on the server side.  My next plan is to get live config updates and changes for server-side sync.
 Please feel free to tell me if you encounter any compatibility issues, though I can't guarantee I will be able to fix them.
 Please report any issues on Github.
 
