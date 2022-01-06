@@ -53,7 +53,7 @@ namespace ExhaustionPlus.Patches
         [HarmonyPatch(typeof(Player), "Awake")]
         class PlayerAwakePatch
         {
-            static void Postfix(Player __instance)
+            public static void Postfix(Player __instance)
             {
                 //Prevent NREs from main menu fake player
                 //TODO: Find a better solution, this function seems unreliable as it just returns "..." for any Player object *except* the main menu player
@@ -78,7 +78,7 @@ namespace ExhaustionPlus.Patches
                 }
                 if (Config.ExhaustionEnable.Value)
                 {
-                    Log.LogInfo("*ExhaustionPlus modifications enabled");
+                    Log.LogInfo("*Exhaustion modifications enabled");
                     OnUseStamina += shim.CheckAndAddExhaustion;
                     OnUpdateStats += shim.CheckAndRemoveExhaustion;
                 }
@@ -108,7 +108,7 @@ namespace ExhaustionPlus.Patches
         [HarmonyPatch(typeof(Player), "HaveStamina")]
         class PlayerHaveStaminaPatch
         {
-            static bool Prefix(ref bool __result, float amount)
+            public static bool Prefix(ref bool __result, float amount)
             {
                 if (OnHaveStamina == null)
                     return true;
@@ -124,12 +124,12 @@ namespace ExhaustionPlus.Patches
         [HarmonyPatch(typeof(Player), "UseStamina")]
         class PlayerUseStaminaPatch
         {
-            static void Prefix(ref float v)
+            public static void Prefix(ref float v)
             {
                 v = BeforeUseStamina?.Invoke(v) ?? v;
             }
 
-            static void Postfix(float v)
+            public static void Postfix(float v)
             {
                 OnUseStamina?.Invoke(v);
             }
@@ -141,7 +141,7 @@ namespace ExhaustionPlus.Patches
         [HarmonyPatch(typeof(Player), "UpdateStats")]
         class PlayerUpdateStatsPatch
         {
-            static void Postfix(float dt)
+            public static void Postfix(float dt)
             {
                 OnUpdateStats?.Invoke(dt);
             }
@@ -153,7 +153,7 @@ namespace ExhaustionPlus.Patches
         [HarmonyPatch(typeof(Player), "IsEncumbered")]
         class PlayerIsEncumberedPatch
         {
-            static bool Prefix(ref bool __result)
+            public static bool Prefix(ref bool __result)
             {
                 if (OnIsEncumbered == null)
                     return true;
@@ -169,7 +169,7 @@ namespace ExhaustionPlus.Patches
         [HarmonyPatch(typeof(Player), "GetBaseFoodHP")]
         class PlayerBaseFoodHPPatch
         {
-            static bool Prefix(ref float __result)
+            public static bool Prefix(ref float __result)
             {
                 if (OnGetBaseFoodHP == null)
                     return true;
@@ -230,7 +230,7 @@ namespace ExhaustionPlus.Patches
         [HarmonyPatch(typeof(Player), "OnDestroy")]
         class PlayerOnDestroyPatch
         {
-            static void Prefix(Player __instance)
+            public static void Prefix(Player __instance)
             {
                 BeforeDestroy?.Invoke(__instance);
             }
@@ -244,12 +244,12 @@ namespace ExhaustionPlus.Patches
         [HarmonyPatch(typeof(Humanoid), "BlockAttack")]
         class HumanoidBlockAttackPatch
         {
-            static void Prefix()
+            public static void Prefix()
             {
                 BeforeBlockAttack?.Invoke();
             }
 
-            static void Postfix(bool __result, Player __instance, float __state)
+            public static void Postfix(bool __result, Player __instance, float __state)
             {
                 OnBlockAttack?.Invoke(__result);
             }
@@ -263,7 +263,7 @@ namespace ExhaustionPlus.Patches
         [HarmonyPatch(typeof(Attack), "GetStaminaUsage")]
         class AttackGetStaminaUsagePatch
         {
-            static void Postfix(ref float __result, Attack __instance)
+            public static void Postfix(ref float __result, Attack __instance)
             {
                 if (Config.WeaponWeightStaminaScalingEnable.Value)
                 {
@@ -280,7 +280,7 @@ namespace ExhaustionPlus.Patches
         [HarmonyPatch(new Type[] { typeof(string), typeof(bool) })]
         class SEManAddStatusEffectPatch
         {
-            static bool Prefix(ref StatusEffect __result, string name, SEMan __instance)
+            public static bool Prefix(ref StatusEffect __result, string name, SEMan __instance)
             {
                 if (string.Equals(name, "Cold") && Config.PushingWarms.Value)
                 {

@@ -7,11 +7,13 @@ using Jotunn.Managers;
 using Jotunn.Utils;
 using UnityEngine;
 using Config = ExhaustionPlus.Utility.RebalanceConfig;
+
 namespace ExhaustionPlus
 {
     /// <summary>
     ///     Load harmony patches
-    [BepInPlugin("ExPlusConfig", "ExhaustionPlus", "0.0.2.0")]
+    ///     Ex+ Added Bepin Metadata, Dependancies & Netwrok compatibility check
+    [BepInPlugin(PluginConfig, PluginName, PluginVersion)]
     [BepInDependency(Jotunn.Main.ModGuid)]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
     // [BepInDependency("cinnabun.backpacks-v1.0.0", BepInDependency.DependencyFlags.SoftDependency)]
@@ -19,25 +21,33 @@ namespace ExhaustionPlus
     {
         // BepInEx' plugin metadata
         public const string PluginGUID = "D2C1EB51-FDBA-4357-949F-B02C3BA57A36";
-        public const string PluginName = "ExhaustionsPlus";
-        public const string PluginVersion = "0.0.2.0";
+        public const string PluginConfig = "ExPlusConfig";
+        public const string PluginName = "ExhaustionPlus";
+        public const string PluginVersion = "0.2.1.5";
+        //Ex+ Added Admin Check for Server Side
         public bool PlayerIsAdmin { get; }
+        //Ex+ added config synchronization server-client
         public bool InitialSynchronization { get; set; }
 
         public void Awake()
         {
             Log.Init(Logger);
-
             RebalanceConfig.Bind(Config);
-
             SetupStatusEffects();
+            
             //Ex+ updated for Jotunn libary
             ItemManager.OnItemsRegistered += SetupIcons;
             ItemManager.OnItemsRegistered += SetupEffects;
-
+            
             DoPatching();
-            CreateConfigValues();
+            
+            //Ex+ added call for config
+            //CreateConfigValues(Config);
             Log.LogInfo("Create Config values");
+            
+            //Ex+ added SyncManager for Config Settings
+            
+            RebalanceConfig.ReadAndWriteConfigValues(Config);
             RebalanceConfig.SyncManager();
         }
 
@@ -45,11 +55,12 @@ namespace ExhaustionPlus
         {
             var harmony = new Harmony("ExPlusConfig");
             harmony.PatchAll();
-            Log.LogInfo("Patching complete");
+            Log.LogInfo("ExPlusConfig Patching complete");
         }
 
         private void SetupIcons()
         {
+            //Ex+ updated to use Jotunn
             Utilities.WarmSprite = PrefabManager.Cache.GetPrefab<Sprite>("Warm");
             Utilities.SweatSprite = PrefabManager.Cache.GetPrefab<Sprite>("Wet");
             Log.LogInfo("Sprites retrieved");
@@ -73,103 +84,50 @@ namespace ExhaustionPlus
 
         private void SetupStatusEffects()
         {
+            //Ex+ updated to use Jotunn
             ItemManager.Instance.AddStatusEffect(new CustomStatusEffect(ScriptableObject.CreateInstance<StatusEffects.SE_Encumbrance>(), true));
             ItemManager.Instance.AddStatusEffect(new CustomStatusEffect(ScriptableObject.CreateInstance<StatusEffects.SE_Exhausted>(), true));
             ItemManager.Instance.AddStatusEffect(new CustomStatusEffect(ScriptableObject.CreateInstance<StatusEffects.SE_Pushing>(), true));
             ItemManager.Instance.AddStatusEffect(new CustomStatusEffect(ScriptableObject.CreateInstance<StatusEffects.SE_Warmed>(), true));
             Log.LogInfo("Status effects injected");
         }
-        private void CreateConfigValues()
+        //Ex+ Added IsAdminOnly Check, updated all values for consitancy
+        private void CreateConfigValues(ConfigFile config)
         {
             Config.SaveOnConfigSet = true;
 
             // Add server config which gets pushed to all clients connecting and can only be edited by admins
             // In local/single player games the player is always considered the admin
-            //Stamina
-            RebalanceConfig.BaseStamina = Config.Bind("Stamina", "BaseStamina", 75f,
-                new ConfigDescription("Base player stamina; vanilla: 75",
-                new AcceptableValueRange<float>(10f, 150f),
+
+            //Encumberance
+            RebalanceConfig.BaseCarryWeight = Config.Bind("Encumberance", "BaseCarryWeight", 200f,
+                new ConfigDescription("Base carry weight; vanilla: 300",
+                new AcceptableValueRange<float>(0f, 1000f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.StaminaMinimum = Config.Bind("Stamina", "StaminaMinimum", -50f,
-                new ConfigDescription("Base stamina minimum, stamina is not usable in negative values but can be reached by using more stamina than you have; vanilla: 0",
-                new AcceptableValueRange<float>(-150f, 0f),
+            RebalanceConfig.EncumberanceAltEnable = Config.Bind("Encumberance", "EncumberanceAltEnable", true,
+                new ConfigDescription("Enable or disable alternative encumberance, scales movement speed on carry weight",
+                new AcceptableValueList<bool>(true, false),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.StaminaRegen = Config.Bind("Stamina", "StaminaRegen", 12f,
-                new ConfigDescription("Base stamina regen; vanilla: 6",
-                new AcceptableValueRange<float>(0f, 30f),
+            RebalanceConfig.EncumberanceAltMinSpeed = Config.Bind("Encumberance", "EncumberanceAltMinSpeed", 0.6f,
+                new ConfigDescription("The minimum speed multiplier applied when reaching the alt encumberance threshold",
+                new AcceptableValueRange<float>(0.6f, 1f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.StaminaDelay = Config.Bind("Stamina", "StaminaDelay", 1.75f,
-                new ConfigDescription("Base stamina regen delay; vanilla: 1",
+            RebalanceConfig.EncumberanceAltMaxSpeed = Config.Bind("Encumberance", "EncumberanceAltMaxSpeed", 1.1f,
+                new ConfigDescription("The maximum speed multiplier applied when unencumbered",
+                new AcceptableValueRange<float>(0.6f, 2f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.EncumberanceAltThreshold = Config.Bind("Encumberance", "EncumberanceAltThreshold", 400f,
+                new ConfigDescription("The carry weight threshold at which to apply the encumbered status",
+                new AcceptableValueRange<float>(0f, 1000f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.EncumberedDrain = Config.Bind("Encumberance", "EncumberanceDrain", 2f,
+                new ConfigDescription("Base stamina drain when encumbered, applies regardless of alternative encumberance; vanilla: 10",
                 new AcceptableValueRange<float>(0f, 20f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.DodgeStamina = Config.Bind("Stamina", "DodgeStamina", 12f,
-                new ConfigDescription("Base dodge stamina usage; vanilla: 10",
-                new AcceptableValueRange<float>(0f, 40f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.JumpStamina = Config.Bind("Stamina", "JumpStamina", 5f,
-                new ConfigDescription("Base jump stamina usage; vanilla: 10",
-                new AcceptableValueRange<float>(0f, 40f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.StaminaUseMultiplier = Config.Bind("Stamina", "StaminaUseMultiplier", 1.5f,
-                new ConfigDescription("Final stamina usage multiplier for any action; vanilla: 1",
-                new AcceptableValueRange<float>(0f, 10f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.BuildUseStamina = Config.Bind("Stamina", "BuildUseStamina", false,
-                new ConfigDescription("Enable or disable stamina usage when building, cultivating or uh.. hoeing",
-                new AcceptableValueList<bool>(true, false),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-
-            //Player
-            RebalanceConfig.BaseHealth = Config.Bind("Player", "BaseHealth", 50f,
-                new ConfigDescription("Base player health; vanilla: 25",
-                new AcceptableValueRange<float>(1f, 150f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.Acceleration = Config.Bind("Player", "Acceleration", 0.25f,
-                new ConfigDescription("Base player movement acceleration; vanilla: 1",
-                new AcceptableValueRange<float>(0.01f, 5f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.ParryTime = Config.Bind("Player", "ParryTime", 0.13f,
-                new ConfigDescription("Base parry time in seconds; vanilla: 0.25",
-                new AcceptableValueRange<float>(0f, 5f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.ParryRefundEnable = Config.Bind("Player", "ParryRefundEnable", true,
-                new ConfigDescription("Enable or disable parry stamina refunds",
-                new AcceptableValueList<bool>(true, false),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.ParryRefundMultiplier = Config.Bind("Player", "ParryRefundMultiplier", 1f,
-                new ConfigDescription("Final stamina refund multiplier applied for a successful parry",
-                new AcceptableValueRange<float>(0f, 10f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.WeaponWeightStaminaScalingEnable = Config.Bind("Player", "WeaponWeightStaminaScalingEnable", true,
-                new ConfigDescription("Enable or disable stamina usage increase based on weapon weight (note that this applies before stamina use multiplier)",
-                new AcceptableValueList<bool>(true, false),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-
-            //Food
-            RebalanceConfig.FoodHealthMin = Config.Bind("Food", "FoodHealthMin", 10f,
-                new ConfigDescription("Minimum health a food item can give after multipliers",
-                new AcceptableValueRange<float>(0f, 100f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.FoodHealthMultiplier = Config.Bind("Food", "FoodHealthMultiplier", 0.8f,
-                new ConfigDescription("Multiplier applied to food health",
-                new AcceptableValueRange<float>(0f, 10f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.FoodStaminaMin = Config.Bind("Food", "FoodStaminaMin", 20f,
-                new ConfigDescription("Minimum stamina a food item can give after multipliers",
-                new AcceptableValueRange<float>(0f, 100f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.FoodStaminaMultiplier = Config.Bind("Food", "FoodStaminaMultiplier", 0.6f,
-                new ConfigDescription("Multiplier applied to food stamina",
-                new AcceptableValueRange<float>(0f, 10f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.FoodBurnTimeMultiplier = Config.Bind("Food", "FoodBurnTimeMultiplier", 1.5f,
-                new ConfigDescription("Multiplier applied to food burn time; vanilla: 1",
-                new AcceptableValueRange<float>(0.01f, 10f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
 
             //Exhaustion
             RebalanceConfig.ExhaustionEnable = Config.Bind("Exhaustion", "ExhaustionEnable", true,
-                new ConfigDescription("Enable or disable Exhaustion sprinting system, player will enter 'pushing' state when sprinting at the configured pushing threshold, and 'exhausted' state at the configured ExhaustionPlus threshold",
+                new ConfigDescription("Enable or disable Exhaustion sprinting system, player will enter 'pushing' state when sprinting at the configured pushing threshold, and 'exhausted' state at the configured Exhaustion threshold",
                 new AcceptableValueList<bool>(true, false),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
             RebalanceConfig.ExhaustionThreshold = Config.Bind("Exhaustion", "ExhaustionThreshold", -40f,
@@ -209,43 +167,104 @@ namespace ExhaustionPlus
                 new AcceptableValueRange<float>(1f, 30f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
 
-            //Encumberance
-            RebalanceConfig.BaseCarryWeight = Config.Bind("Encumberance", "BaseCarryWeight", 200f,
-                new ConfigDescription("Base carry weight; vanilla: 300",
-                new AcceptableValueRange<float>(0f, 1000f),
+            //Food
+            RebalanceConfig.FoodHealthMin = Config.Bind("Food", "FoodHealthMin", 10f,
+                new ConfigDescription("Minimum health a food item can give after multipliers",
+                new AcceptableValueRange<float>(0f, 100f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.EncumberanceAltEnable = Config.Bind("Encumberance", "EncumberanceAltEnable", true,
-                new ConfigDescription("Enable or disable alternative encumberance, scales movement speed on carry weight",
-                new AcceptableValueList<bool>(true, false),
+            RebalanceConfig.FoodHealthMultiplier = Config.Bind("Food", "FoodHealthMultiplier", 0.8f,
+                new ConfigDescription("Multiplier applied to food health",
+                new AcceptableValueRange<float>(0f, 10f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.EncumberanceAltMinSpeed = Config.Bind("Encumberance", "EncumberanceAltMinSpeed", 0.6f,
-                new ConfigDescription("The minimum speed multiplier applied when reaching the alt encumberance threshold",
-                new AcceptableValueRange<float>(0.6f, 1f),
+            RebalanceConfig.FoodStaminaMin = Config.Bind("Food", "FoodStaminaMin", 20f,
+                new ConfigDescription("Minimum stamina a food item can give after multipliers",
+                new AcceptableValueRange<float>(0f, 100f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.EncumberanceAltMaxSpeed = Config.Bind("Encumberance", "EncumberanceAltMaxSpeed", 1.1f,
-                new ConfigDescription("The maximum speed multiplier applied when unencumbered",
-                new AcceptableValueRange<float>(0.6f, 2f),
+            RebalanceConfig.FoodStaminaMultiplier = Config.Bind("Food", "FoodStaminaMultiplier", 0.6f,
+                new ConfigDescription("Multiplier applied to food stamina",
+                new AcceptableValueRange<float>(0f, 10f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.EncumberanceAltThreshold = Config.Bind("Encumberance", "EncumberanceAltThreshold", 400f,
-                new ConfigDescription("The carry weight threshold at which to apply the encumbered status",
-                new AcceptableValueRange<float>(0f, 1000f),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
-            RebalanceConfig.EncumberedDrain = Config.Bind("Encumberance", "EncumberanceDrain", 2f,
-                new ConfigDescription("Base stamina drain when encumbered, applies regardless of alternative encumberance; vanilla: 10",
-                new AcceptableValueRange<float>(0f, 20f),
+            RebalanceConfig.FoodBurnTimeMultiplier = Config.Bind("Food", "FoodBurnTimeMultiplier", 1.5f,
+                new ConfigDescription("Multiplier applied to food burn time; vanilla: 1",
+                new AcceptableValueRange<float>(0.01f, 10f),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
 
-            //NexusID
+            //Player
+            RebalanceConfig.BaseHealth = Config.Bind("Player", "BaseHealth", 50f,
+                new ConfigDescription("Base player health; vanilla: 25",
+                new AcceptableValueRange<float>(1f, 150f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.Acceleration = Config.Bind("Player", "Acceleration", 0.25f,
+                new ConfigDescription("Base player movement acceleration; vanilla: 1",
+                new AcceptableValueRange<float>(0.01f, 5f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.ParryTime = Config.Bind("Player", "ParryTime", 0.13f,
+                new ConfigDescription("Base parry time in seconds; vanilla: 0.25",
+                new AcceptableValueRange<float>(0f, 5f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.ParryRefundEnable = Config.Bind("Player", "ParryRefundEnable", true,
+                new ConfigDescription("Enable or disable parry stamina refunds",
+                new AcceptableValueList<bool>(true, false),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.ParryRefundMultiplier = Config.Bind("Player", "ParryRefundMultiplier", 1f,
+                new ConfigDescription("Final stamina refund multiplier applied for a successful parry",
+                new AcceptableValueRange<float>(0f, 10f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.WeaponWeightStaminaScalingEnable = Config.Bind("Player", "WeaponWeightStaminaScalingEnable", true,
+                new ConfigDescription("Enable or disable stamina usage increase based on weapon weight (note that this applies before stamina use multiplier)",
+                new AcceptableValueList<bool>(true, false),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+
+            //Stamina
+            RebalanceConfig.BaseStamina = Config.Bind("Stamina", "BaseStamina", 75f,
+                new ConfigDescription("Base player stamina; vanilla: 75",
+                new AcceptableValueRange<float>(10f, 150f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.StaminaMinimum = Config.Bind("Stamina", "StaminaMinimum", -50f,
+                new ConfigDescription("Base stamina minimum, stamina is not usable in negative values but can be reached by using more stamina than you have; vanilla: 0",
+                new AcceptableValueRange<float>(-150f, 0f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.StaminaRegen = Config.Bind("Stamina", "StaminaRegen", 12f,
+                new ConfigDescription("Base stamina regen; vanilla: 6",
+                new AcceptableValueRange<float>(0f, 30f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.StaminaDelay = Config.Bind("Stamina", "StaminaDelay", 1.75f,
+                new ConfigDescription("Base stamina regen delay; vanilla: 1",
+                new AcceptableValueRange<float>(0f, 20f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.DodgeStamina = Config.Bind("Stamina", "DodgeStamina", 12f,
+                new ConfigDescription("Base dodge stamina usage; vanilla: 10",
+                new AcceptableValueRange<float>(0f, 40f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.JumpStamina = Config.Bind("Stamina", "JumpStamina", 5f,
+                new ConfigDescription("Base jump stamina usage; vanilla: 10",
+                new AcceptableValueRange<float>(0f, 40f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.StaminaUseMultiplier = Config.Bind("Stamina", "StaminaUseMultiplier", 1.5f,
+                new ConfigDescription("Final stamina usage multiplier for any action; vanilla: 1",
+                new AcceptableValueRange<float>(0f, 10f),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.BuildUseStamina = Config.Bind("Stamina", "BuildUseStamina", false,
+                new ConfigDescription("Enable or disable stamina usage when building, cultivating or uh.. hoeing",
+                new AcceptableValueList<bool>(true, false),
+                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+
+            //Utility - Ex+ updated NexusID to match ExhaustionPlus https://www.nexusmods.com/valheim/mods/1685
             RebalanceConfig.NexusID = Config.Bind("Utility", "NexusID", 1685,
                 new ConfigDescription("Nexus Mod ID for updates, do not change",
                 new AcceptableValueRange<int>(0, 2000),
-                new ConfigurationManagerAttributes { IsAdminOnly = true }));
+                new ConfigurationManagerAttributes { IsAdminOnly = true },
+                new ConfigurationManagerAttributes() { Browsable = false }));
             RebalanceConfig.BaseHealthStaminaEnable = Config.Bind("Utility", "BaseHealthStaminaEnable", true,
                 new ConfigDescription("Enables or disables base health and stamina adjustments (note other mods may disable this functionality by nature). " +
                 "The method of modification used is somewhat fragile and could break with any update to the game, or not play ball with another mod that touches the same values, as such " +
                 "I'm giving you the option to disable the patching process here should anything break.",
                 new AcceptableValueList<bool>(true, false),
                 new ConfigurationManagerAttributes { IsAdminOnly = true }));
+            RebalanceConfig.SyncManager();
         }
+        
+
+
     }
 }
