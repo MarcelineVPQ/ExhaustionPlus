@@ -19,6 +19,8 @@ namespace ExhaustionPlus.Patches
         public static Action<bool> OnBlockAttack { get; set; }
         public static Func<float> OnGetBaseFoodHP { get; set; }
         public static Action<Player> BeforeDestroy { get; set; }
+        public static Action<float> GetAttackStamina { get; set; }
+
 
         public static void Unassign(PlayerShim shim)
         {
@@ -260,7 +262,8 @@ namespace ExhaustionPlus.Patches
         ///     
         ///     TODO: Consider allowing configuration of lerp values
         /// </summary>
-        [HarmonyPatch(typeof(Attack), "GetStaminaUsage")]
+
+        [HarmonyPatch(typeof(Attack), "GetAttackStamina")]
         class AttackGetStaminaUsagePatch
         {
             public static void Postfix(ref float __result, Attack __instance)

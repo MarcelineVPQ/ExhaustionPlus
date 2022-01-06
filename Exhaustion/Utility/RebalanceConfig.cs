@@ -63,7 +63,6 @@ namespace ExhaustionPlus.Utility
         {
             //Addedd as part of ExhaustionPlus update for Jotunn
             config.SaveOnConfigSet = true;
-           
             //Encumberance
             BaseCarryWeight = config.Bind("Encumberance", "BaseCarryWeight", 200f,
                 new ConfigDescription("Base carry weight; vanilla: 300",
@@ -230,8 +229,7 @@ namespace ExhaustionPlus.Utility
             var sanity = IsConfigSane();
             if (!sanity.sane)
                 UnityEngine.Debug.LogError($"Configuration invalid: {sanity.reason}");
-            //SyncManager();
-            //config.Save();
+            ReadAndWriteConfigValues(config);
         }
         //Ex+ added configuration Sync Manager for config settings
         public static void SyncManager()
@@ -251,7 +249,7 @@ namespace ExhaustionPlus.Utility
             //Ex+ added check for a change in Admin status
             SynchronizationManager.OnAdminStatusChanged += () =>
             {
-                Jotunn.Logger.LogMessage($"Admin status sync event received: {(SynchronizationManager.Instance.PlayerIsAdmin ? "You're admin now" : "Downvoted, minion")}");
+                Jotunn.Logger.LogMessage($"Admin status sync event received: {(SynchronizationManager.Instance.PlayerIsAdmin ? "You're admin now" : "Downvoted, client")}");
             };
         }
         public static void ReadAndWriteConfigValues(ConfigFile config)
@@ -263,17 +261,15 @@ namespace ExhaustionPlus.Utility
 
             Jotunn.Logger.LogMessage("Reading Config Entries");
 
-
             // Writing configuration entry
             config["Encumberance", "BaseCarryWeight"].BoxedValue = BaseCarryWeight;
             config["Encumberance", "EncumberanceAltEnable"].BoxedValue = EncumberanceAltEnable;
             config["Encumberance", "EncumberanceAltMinSpeed"].BoxedValue = EncumberanceAltMinSpeed;
+
             Jotunn.Logger.LogMessage("Writing Config Entries");
             config.Save();
-
-
         }
-
+        
         private static (bool sane, string reason) IsConfigSane()
         {
             var reason = new StringBuilder();
