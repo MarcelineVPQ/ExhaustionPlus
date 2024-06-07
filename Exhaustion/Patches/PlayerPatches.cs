@@ -280,7 +280,7 @@ namespace ExhaustionPlus.Patches
         }
 
         [HarmonyPatch(typeof(SEMan), "AddStatusEffect")]
-        [HarmonyPatch(new Type[] { typeof(string), typeof(bool) })]
+        [HarmonyPatch(new Type[] { typeof(string), typeof(bool), typeof(int), typeof(float) })]
         class SEManAddStatusEffectPatch
         {
             public static bool Prefix(ref StatusEffect __result, string name, SEMan __instance)
